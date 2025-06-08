@@ -52,23 +52,26 @@ export const useCrypto = () => {
       const aesKey = await generateAESKey();
       const { publicKey, privateKey } = await generateKyberKeyPair();
 
-      // Store keys in database
+      // Store keys in database - convert Uint8Array to base64 strings
       const aesKeyData = await crypto.subtle.exportKey('raw', aesKey);
+      const aesKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(aesKeyData)));
+      const kyberPublicBase64 = btoa(String.fromCharCode(...publicKey));
+      const kyberPrivateBase64 = btoa(String.fromCharCode(...privateKey));
       
       const keyInserts = [
         {
           user_id: user.id,
           key_type: 'aes_session',
-          key_data: new Uint8Array(aesKeyData),
+          key_data: aesKeyBase64,
           session_id: sessionId,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           rotation_count: keyRotationCount + 1,
           rotation_reason: reason
         },
         {
           user_id: user.id,
           key_type: 'kyber_public',
-          key_data: publicKey,
+          key_data: kyberPublicBase64,
           session_id: sessionId,
           rotation_count: keyRotationCount + 1,
           rotation_reason: reason
@@ -76,7 +79,7 @@ export const useCrypto = () => {
         {
           user_id: user.id,
           key_type: 'kyber_private',
-          key_data: privateKey,
+          key_data: kyberPrivateBase64,
           session_id: sessionId,
           rotation_count: keyRotationCount + 1,
           rotation_reason: reason

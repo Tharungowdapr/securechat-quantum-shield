@@ -8,9 +8,6 @@ import { ChatInterface } from '@/components/chat/ChatInterface';
 import { SecurityDashboard } from '@/components/security/SecurityDashboard';
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { useAuth } from '@/hooks/useAuth';
-import { useCrypto } from '@/hooks/useCrypto';
-import { useNetworkRouting } from '@/hooks/useNetworkRouting';
-import { useIDS } from '@/hooks/useIDS';
 
 const SecureChat = () => {
   const { user, loading } = useAuth();
@@ -23,6 +20,14 @@ const SecureChat = () => {
       setShowAuthModal(true);
     }
   }, [user, loading]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+  };
 
   if (loading) {
     return (
@@ -39,7 +44,7 @@ const SecureChat = () => {
     <div className="min-h-screen bg-gray-100">
       <header className="bg-green-600 text-white py-4 px-6 flex justify-between items-center shadow-md">
         <div className="flex items-center">
-          <i className="fas fa-shield-alt mr-2"></i>
+          <i className="fas fa-lock mr-2"></i>
           <h1 className="text-xl font-bold">SecureChat</h1>
         </div>
         <div className="flex items-center space-x-4">
@@ -47,7 +52,7 @@ const SecureChat = () => {
             {user?.email || 'Anonymous'}
           </span>
           <button
-            onClick={() => supabase.auth.signOut()}
+            onClick={handleSignOut}
             className="bg-white text-green-600 px-3 py-1 rounded hover:bg-gray-100"
           >
             Sign Out

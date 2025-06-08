@@ -8,12 +8,13 @@ interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserId }) => {
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-2">
       {messages.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
-          <i className="fas fa-lock text-4xl mb-4"></i>
-          <p>Messages are end-to-end encrypted</p>
-          <p className="text-sm">Start a secure conversation</p>
+        <div className="flex justify-center">
+          <div className="bg-white rounded-lg p-3 shadow-sm text-center">
+            <i className="fas fa-lock text-green-500 mb-2"></i>
+            <p>Messages are end-to-end encrypted</p>
+          </div>
         </div>
       ) : (
         messages.map((message) => {
@@ -25,15 +26,20 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
               className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-sm relative ${
                   isOwn
-                    ? 'bg-green-500 text-white'
-                    : 'bg-white border shadow-sm'
+                    ? 'bg-green-200 ml-auto'
+                    : 'bg-white mr-auto'
                 }`}
+                style={{
+                  borderTopRightRadius: isOwn ? '0' : '8px',
+                  borderTopLeftRadius: isOwn ? '8px' : '0',
+                  wordWrap: 'break-word'
+                }}
               >
                 <div className="break-words">{message.content}</div>
-                <div className={`text-xs mt-1 flex items-center justify-between ${
-                  isOwn ? 'text-green-100' : 'text-gray-500'
+                <div className={`text-xs mt-1 text-right ${
+                  isOwn ? 'text-green-700' : 'text-gray-500'
                 }`}>
                   <span>
                     {new Date(message.created_at).toLocaleTimeString([], {
