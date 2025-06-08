@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -18,15 +17,27 @@ const SecureChat = () => {
   useEffect(() => {
     if (!loading && !user) {
       setShowAuthModal(true);
+    } else if (user) {
+      setShowAuthModal(false);
     }
   }, [user, loading]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully",
-    });
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -40,6 +51,23 @@ const SecureChat = () => {
     );
   }
 
+  // Show auth modal if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <i className="fas fa-lock text-6xl text-green-600 mb-4"></i>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">SecureChat</h1>
+          <p className="text-gray-600 mb-8">End-to-end encrypted messaging with quantum-safe security</p>
+        </div>
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-green-600 text-white py-4 px-6 flex justify-between items-center shadow-md">
@@ -49,11 +77,11 @@ const SecureChat = () => {
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm">
-            {user?.email || 'Anonymous'}
+            {user?.user_metadata?.full_name || user?.email || 'User'}
           </span>
           <button
             onClick={handleSignOut}
-            className="bg-white text-green-600 px-3 py-1 rounded hover:bg-gray-100"
+            className="bg-white text-green-600 px-3 py-1 rounded hover:bg-gray-100 transition-colors"
           >
             Sign Out
           </button>
@@ -65,7 +93,7 @@ const SecureChat = () => {
           <nav className="p-4 space-y-2">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`w-full text-left px-3 py-2 rounded ${
+              className={`w-full text-left px-3 py-2 rounded transition-colors ${
                 activeTab === 'chat' ? 'bg-green-100 text-green-800' : 'hover:bg-gray-100'
               }`}
             >
@@ -74,7 +102,7 @@ const SecureChat = () => {
             </button>
             <button
               onClick={() => setActiveTab('security')}
-              className={`w-full text-left px-3 py-2 rounded ${
+              className={`w-full text-left px-3 py-2 rounded transition-colors ${
                 activeTab === 'security' ? 'bg-green-100 text-green-800' : 'hover:bg-gray-100'
               }`}
             >
@@ -83,7 +111,7 @@ const SecureChat = () => {
             </button>
             <button
               onClick={() => setActiveTab('network')}
-              className={`w-full text-left px-3 py-2 rounded ${
+              className={`w-full text-left px-3 py-2 rounded transition-colors ${
                 activeTab === 'network' ? 'bg-green-100 text-green-800' : 'hover:bg-gray-100'
               }`}
             >
@@ -100,6 +128,7 @@ const SecureChat = () => {
         </div>
       </div>
 
+      {/* Show auth modal when explicitly requested */}
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 

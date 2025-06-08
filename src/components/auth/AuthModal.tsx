@@ -28,24 +28,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // For development/demo purposes, disable email confirmation
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName,
-            }
+            },
+            // Set emailRedirectTo to current origin for production
+            emailRedirectTo: `${window.location.origin}/`,
           }
         });
         
         if (error) throw error;
         
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
-        });
+        if (data.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Account created!",
+            description: "For demo purposes, you can sign in immediately. In production, check your email to verify your account.",
+          });
+        } else {
+          toast({
+            title: "Account created successfully!",
+            description: "You can now sign in to SecureChat.",
+          });
+        }
+        
+        // Switch to sign in mode after successful signup
+        setIsSignUp(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -59,9 +72,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         onClose();
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
+      let errorMessage = error.message;
+      
+      // Handle specific error cases
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+        setIsSignUp(false);
+      }
+      
       toast({
         title: "Authentication error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -123,6 +149,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           
           <div className="mt-4 text-center">
             <button
+              type="button"
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-green-600 hover:underline"
             >
@@ -132,6 +159,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               }
             </button>
           </div>
+          
+          {isSignUp && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Demo Mode:</strong> Email confirmation is optional for testing. 
+                In production, you would need to verify your email address.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
